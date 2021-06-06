@@ -1,9 +1,9 @@
-use super::http::{Request, Response, StatusCode, Method};
+use super::http::{Method, Request, Response, StatusCode};
 use super::server::Handler;
 use std::fs;
 
 pub struct WebsiteHandler {
-    public_path: String
+    public_path: String,
 }
 
 impl WebsiteHandler {
@@ -22,30 +22,25 @@ impl WebsiteHandler {
                     None
                 }
             }
-            Err(_) => None
+            Err(_) => None,
         }
     }
 }
 
 impl Handler for WebsiteHandler {
-    fn handle_request(&mut self, request: &Request)-> Response {
+    fn handle_request(&mut self, request: &Request) -> Response {
+        println!("Parse a request WebsiteHandler:");
+
         match request.method() {
-            Method::GET =>  match request.path() {
+            Method::GET => match request.path() {
                 "/" => Response::new(StatusCode::Ok, self.read_file("index.html")),
                 "/hello" => Response::new(StatusCode::Ok, self.read_file("hello.html")),
                 path => match self.read_file(path) {
                     Some(contents) => Response::new(StatusCode::Ok, Some(contents)),
-                    None => Response::new(StatusCode::NotFound, None)
-                }
+                    None => Response::new(StatusCode::NotFound, None),
+                },
             },
             _ => Response::new(StatusCode::NotFound, None),
         }
-        // println!("Parse a request :");
-
-        // dbg!(request);
-        // Response::new(
-        //     StatusCode::Ok, 
-        //     Some("<h1>It works!</h1><br />Uhhhhh!".to_string())
-        // )
     }
 }
