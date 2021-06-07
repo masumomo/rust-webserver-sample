@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 // use std::convert::TryInto;
 // crate means root
 use crate::http::{ParseError, Request, Response, StatusCode};
+use crate::lib::ThreadPool;
 use std::io::Read;
 use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
@@ -26,13 +27,16 @@ impl Server {
     pub fn run(self, handler: impl Handler + Send + 'static) {
         println!("Hello, Server! PORT:{}", self.addr);
 
+        // TODO
+        // Creating a Similar Interface for a Finite Number of Threads
         let listener = TcpListener::bind(&self.addr).unwrap();
         let thread_handler = Arc::new(Mutex::new(handler));
+        let pool = ThreadPool::new(4);
         loop {
             let cloned_thread_handler = Arc::clone(&thread_handler);
             match listener.accept() {
                 Ok((mut stream, _addr)) => {
-                    thread::spawn(move || {
+                    pool.execute(move || {
                         // You can use underscore to ignore argument
                         let mut buffer = [0; 1024];
                         match stream.read(&mut buffer) {

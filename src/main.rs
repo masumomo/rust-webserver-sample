@@ -1,8 +1,10 @@
 #![allow(dead_code)]
+use lib::ThreadPool;
 use server::Server;
 use std::env;
 use website_handler::WebsiteHandler;
 mod http;
+mod lib;
 mod server;
 mod website_handler;
 
