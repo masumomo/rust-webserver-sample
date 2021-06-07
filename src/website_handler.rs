@@ -1,6 +1,8 @@
 use super::http::{Method, Request, Response, StatusCode};
 use super::server::Handler;
 use std::fs;
+use std::thread;
+use std::time::Duration;
 
 pub struct WebsiteHandler {
     public_path: String,
@@ -35,6 +37,10 @@ impl Handler for WebsiteHandler {
             Method::GET => match request.path() {
                 "/" => Response::new(StatusCode::Ok, self.read_file("index.html")),
                 "/hello" => Response::new(StatusCode::Ok, self.read_file("hello.html")),
+                "/slow" => {
+                    println!("SLOW:");
+                    Response::new(StatusCode::Ok, self.read_file("hello.html"))
+                }
                 path => match self.read_file(path) {
                     Some(contents) => Response::new(StatusCode::Ok, Some(contents)),
                     None => Response::new(StatusCode::NotFound, None),

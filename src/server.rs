@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 // use std::convert::TryInto;
 // crate means root
 use crate::http::{ParseError, Request, Response, StatusCode};
-use std::io::{Read, Write};
+use std::io::Read;
 use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -23,7 +23,7 @@ impl Server {
     pub fn new(addr: String) -> Self {
         Server { addr }
     }
-    pub fn run(self, mut handler: impl Handler + Send + 'static) {
+    pub fn run(self, handler: impl Handler + Send + 'static) {
         println!("Hello, Server! PORT:{}", self.addr);
 
         let listener = TcpListener::bind(&self.addr).unwrap();
@@ -31,7 +31,7 @@ impl Server {
         loop {
             let cloned_thread_handler = Arc::clone(&thread_handler);
             match listener.accept() {
-                Ok((mut stream, addr)) => {
+                Ok((mut stream, _addr)) => {
                     thread::spawn(move || {
                         // You can use underscore to ignore argument
                         let mut buffer = [0; 1024];
@@ -42,17 +42,11 @@ impl Server {
                                     String::from_utf8_lossy(&mut buffer)
                                 );
 
+                                thread::sleep(Duration::from_secs(5));
                                 let mut m = cloned_thread_handler.lock().unwrap();
                                 let response = match Request::try_from(&buffer[..]) {
-                                    Ok(request) => {
-                                        println!("Parse a request :");
-                                        dbg!(&request);
-                                        m.handle_request(&request)
-                                    }
-                                    Err(e) => {
-                                        println!("Failed to parse from connection :{:?}", e);
-                                        m.handle_bad_request(e)
-                                    }
+                                    Ok(request) => m.handle_request(&request),
+                                    Err(e) => m.handle_bad_request(e),
                                 };
                                 if let Err(e) = response.send(&mut stream) {
                                     println!("Failed to send response :{}", e);
@@ -63,7 +57,6 @@ impl Server {
                     });
                 }
                 Err(e) => println!("Failed to establish a connection :{}", e),
-                _ => println!("Something wrong"),
             }
         }
     }

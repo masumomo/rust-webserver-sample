@@ -1,7 +1,5 @@
 use super::status_code::StatusCode;
-use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::io::{Result as IoResult, Write};
-use std::net::TcpStream;
 
 #[derive(Debug)]
 pub struct Response {
@@ -29,6 +27,7 @@ impl Response {
             Some(b) => b,
             None => "",
         };
+
         write!(
             stream,
             "HTTP/1.1 {} {}\r\n\r\n{}",
