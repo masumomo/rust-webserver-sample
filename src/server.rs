@@ -4,6 +4,7 @@ use std::convert::TryFrom;
 use crate::http::{ParseError, Request, Response, StatusCode};
 use crate::lib::ThreadPool;
 use std::io::Read;
+use std::io::Write;
 use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -30,10 +31,10 @@ impl Server {
         // TODO
         // Creating a Similar Interface for a Finite Number of Threads
         let listener = TcpListener::bind(&self.addr).unwrap();
-        let thread_handler = Arc::new(Mutex::new(handler));
-        let pool = ThreadPool::new(4);
+        let handler = Arc::new(Mutex::new(handler));
+        let pool = ThreadPool::new(10);
         loop {
-            let cloned_thread_handler = Arc::clone(&thread_handler);
+            let handler = Arc::clone(&handler);
             match listener.accept() {
                 Ok((mut stream, _addr)) => {
                     pool.execute(move || {
@@ -45,9 +46,8 @@ impl Server {
                                     "Received a request :{}",
                                     String::from_utf8_lossy(&mut buffer)
                                 );
-
-                                thread::sleep(Duration::from_secs(5));
-                                let mut m = cloned_thread_handler.lock().unwrap();
+                                // thread::sleep(Duration::from_secs(5));
+                                let mut m = handler.lock().unwrap();
                                 let response = match Request::try_from(&buffer[..]) {
                                     Ok(request) => m.handle_request(&request),
                                     Err(e) => m.handle_bad_request(e),
@@ -58,6 +58,8 @@ impl Server {
                             }
                             Err(e) => println!("Failed to read from connection :{}", e),
                         }
+                        println!("stream.flush() ");
+                        stream.flush().unwrap();
                     });
                 }
                 Err(e) => println!("Failed to establish a connection :{}", e),
