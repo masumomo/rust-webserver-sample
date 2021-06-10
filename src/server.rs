@@ -32,7 +32,7 @@ impl Server {
         // Creating a Similar Interface for a Finite Number of Threads
         let listener = TcpListener::bind(&self.addr).unwrap();
         let handler = Arc::new(Mutex::new(handler));
-        let pool = ThreadPool::new(10);
+        let pool = ThreadPool::new(3);
         loop {
             let handler = Arc::clone(&handler);
             match listener.accept() {
@@ -47,10 +47,10 @@ impl Server {
                                     String::from_utf8_lossy(&mut buffer)
                                 );
                                 // thread::sleep(Duration::from_secs(5));
-                                let mut m = handler.lock().unwrap();
+                                let mut handler = handler.lock().unwrap();
                                 let response = match Request::try_from(&buffer[..]) {
-                                    Ok(request) => m.handle_request(&request),
-                                    Err(e) => m.handle_bad_request(e),
+                                    Ok(request) => handler.handle_request(&request),
+                                    Err(e) => handler.handle_bad_request(e),
                                 };
                                 if let Err(e) = response.send(&mut stream) {
                                     println!("Failed to send response :{}", e);
@@ -58,8 +58,8 @@ impl Server {
                             }
                             Err(e) => println!("Failed to read from connection :{}", e),
                         }
-                        println!("stream.flush() ");
                         stream.flush().unwrap();
+                        println!("stream.flush() ");
                     });
                 }
                 Err(e) => println!("Failed to establish a connection :{}", e),

@@ -28,7 +28,12 @@ impl ThreadPool {
     {
         let job = Box::new(f);
         // TODO Got error
-        self.sender.send(job).unwrap();
+        match self.sender.send(job) {
+            Ok(res) => {
+                println!("Send to job --------------- :{:?}", res);
+            }
+            Err(e) => println!("Failed to send job:{}", e),
+        }
     }
 }
 struct Worker {
@@ -42,6 +47,7 @@ impl Worker {
             let job = receiver.lock().unwrap().recv().unwrap();
             println!("Worker {} got a job; executing.", id);
             job();
+            println!("Worker {} is done.", id);
         });
         Worker {
             id,

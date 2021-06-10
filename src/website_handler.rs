@@ -14,7 +14,6 @@ impl WebsiteHandler {
     }
     fn read_file(&self, file_path: &str) -> Option<String> {
         let path = format!("{}/{}", self.public_path, file_path);
-        dbg!(&path);
         match fs::canonicalize(path) {
             Ok(path) => {
                 if path.starts_with(&self.public_path) {
@@ -31,8 +30,6 @@ impl WebsiteHandler {
 
 impl Handler for WebsiteHandler {
     fn handle_request(&mut self, request: &Request) -> Response {
-        println!("Parse a request WebsiteHandler:");
-
         match request.method() {
             Method::GET => match request.path() {
                 "/" => Response::new(StatusCode::Ok, self.read_file("index.html")),
